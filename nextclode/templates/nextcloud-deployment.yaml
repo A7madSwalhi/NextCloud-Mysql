@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nextcloud.fullname" . }}-nextcloud
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "nextcloud.fullname" . }}-nextcloud
+  template:
+    metadata:
+      labels:
+        app: {{ include "nextcloud.fullname" . }}-nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: "{{ .Values.image.nextcloud.repository }}:{{ .Values.image.nextcloud.tag }}"
+          ports:
+            - containerPort: 80
+          env:
+            - name: MYSQL_HOST
+              value: {{ include "nextcloud.fullname" . }}-mysql
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_PASSWORD
+
+{{- if .Values.nextcloud.adminUser }}
+            - name: NEXTCLOUD_ADMIN_USER
+              value: {{ .Values.nextcloud.adminUser | quote }}
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              value: {{ .Values.nextcloud.adminPassword | quote }}
+{{- end }}
+
+          volumeMounts:
+            - name: nextcloud-data
+              mountPath: /var/www/html
+      volumes:
+        - name: nextcloud-data
+          persistentVolumeClaim:
+            claimName: {{ include "nextcloud.fullname" . }}-nextcloud-pvc

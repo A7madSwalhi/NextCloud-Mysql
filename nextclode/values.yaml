@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  nextcloud:
+    repository: nextcloud
+    tag: latest
+  mysql:
+    repository: mysql
+    tag: "8.0"
+
+service:
+  nextcloud:
+    type: NodePort
+    nodePort: 30090
+
+mysql:
+  rootPassword: rootpassword
+  user: nextclouduser
+  password: nextcloudpass
+  database: nextclouddb
+  storage: 1Gi
+
+nextcloud:
+  adminUser: ""
+  adminPassword: ""
+  storage: 1Gi
+
+ingress:
+  enabled: false
+  host: nextcloud.local

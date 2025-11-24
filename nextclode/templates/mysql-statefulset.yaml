@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "nextcloud.fullname" . }}-mysql
+spec:
+  serviceName: {{ include "nextcloud.fullname" . }}-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "nextcloud.fullname" . }}-mysql
+  template:
+    metadata:
+      labels:
+        app: {{ include "nextcloud.fullname" . }}-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: "{{ .Values.image.mysql.repository }}:{{ .Values.image.mysql.tag }}"
+          args:
+            - "--transaction-isolation=READ-COMMITTED"
+            - "--binlog-format=ROW"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextcloud.fullname" . }}-mysql-secret
+                  key: MYSQL_DATABASE
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.mysql.storage }}
